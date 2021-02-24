@@ -5,20 +5,25 @@ import org.json.simple.*;
 
 public class DatabaseTest {
 
+    /*public static void main(String[] args) {
+        
+      getJSONData();  
+    }*/
 
-
-    public JSONArray getJSONData() {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public JSONArray getJSONData() { 
         Connection conn = null;
         PreparedStatement pstSelect = null, pstUpdate = null;
         ResultSet resultset = null;
         ResultSetMetaData metadata = null;
         
         String query, key, value;
-        String newFirstName = "Alfred", newLastName = "Neuman";
+
         
         boolean hasresults;
         int resultCount, columnCount, updateCount = 0;
+        
+        //JSONObject fobj = new JSONObject();
+        JSONArray datarr = new JSONArray();
         
         try {
             
@@ -44,34 +49,7 @@ public class DatabaseTest {
                 /* Connection Open! */
                 
                 System.out.println("Connected Successfully!");
-                
-                // Prepare Update Query
-                
-                query = "INSERT INTO people (firstname, lastname) VALUES (?, ?)";
-                pstUpdate = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-                pstUpdate.setString(1, newFirstName);
-                pstUpdate.setString(2, newLastName);
-                
-                // Execute Update Query
-                
-                updateCount = pstUpdate.executeUpdate();
-                
-                // Get New Key; Print To Console
-                
-                if (updateCount > 0) {
-            
-                    resultset = pstUpdate.getGeneratedKeys();
-
-                    if (resultset.next()) {
-
-                        System.out.print("Update Successful!  New Key: ");
-                        System.out.println(resultset.getInt(1));
-
-                    }
-
-                }
-                
-                
+                                                
                 /* Prepare Select Query */
                 
                 query = "SELECT * FROM people";
@@ -87,6 +65,7 @@ public class DatabaseTest {
                 
                 System.out.println("Getting Results ...");
                 
+                
                 while ( hasresults || pstSelect.getUpdateCount() != -1 ) {
 
                     if ( hasresults ) {
@@ -98,41 +77,32 @@ public class DatabaseTest {
                         columnCount = metadata.getColumnCount();
                         
                         /* Get Column Names; Print as Table Header */
-                        
-                        for (int i = 1; i <= columnCount; i++) {
-
+                        for (int i = 1; i <= columnCount; i++) 
+                        {
                             key = metadata.getColumnLabel(i);
-
-                            System.out.format("%20s", key);
-
                         }
+                        
+                        
                         
                         /* Get Data; Print as Table Rows */
-                        
+
                         while(resultset.next()) {
-                            
                             /* Begin Next ResultSet Row */
 
-                            System.out.println();
+ 
                             
-                            /* Loop Through ResultSet Columns; Print Values */
-
-                            for (int i = 1; i <= columnCount; i++) {
-
-                                value = resultset.getString(i);
-
-                                if (resultset.wasNull()) {
-                                    System.out.format("%20s", "NULL");
-                                }
-
-                                else {
-                                    System.out.format("%20s", value);
-                                }
-
-                            }
-
+                            /* Loop Through ResultSet Columns; Print Values */                                                        
+                            
+                            JSONObject fobj = new JSONObject();
+                            for (int i = 1; i <= columnCount; i++)
+                            {                                
+                                if(!metadata.getColumnLabel(i).equals("id"))        //removes id section
+                                {
+                                    fobj.put(metadata.getColumnLabel(i), resultset.getString(i));
+                                }                                
+                            }     
+                            datarr.add(fobj);                           
                         }
-                        JSONObject fobj = new JSONObject();
                     }
 
                     else {
@@ -152,12 +122,7 @@ public class DatabaseTest {
                 }
                 
             }
-            
-            System.out.println();
-            
-            
-            
-            
+                                                           
             /* Close Database Connection */
             
             conn.close();
@@ -179,7 +144,7 @@ public class DatabaseTest {
             if (pstUpdate != null) { try { pstUpdate.close(); pstUpdate = null; } catch (Exception e) {} }
             
         }
-        return null;
+        return datarr;
     }
     
 }
